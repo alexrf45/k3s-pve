@@ -1,0 +1,93 @@
+cluster:
+  name: fr3d
+  id: 1
+kubeProxyReplacement: "true"
+k8sServiceHost: 10.3.3.40
+k8sServicePort: 6443
+rollOutCiliumPods: true
+# -- Enable installation of PodCIDR routes between worker
+# nodes if worker nodes share a common L2 network segment.
+autoDirectNodeRoutes: true
+l2announcements:
+  enabled: true
+waitForKubeProxy: false
+cni:
+  install: true
+ingressController:
+  enabled: false
+  default: false
+  loadbalancerMode: shared
+  secretsNamespace:
+    create: true
+    name: cilium-secrets
+    sync: true
+  service:
+    name: cilium-ingress
+    type: LoadBalancer
+    loadBalancerIP: ""
+    externalTrafficPolicy: Cluster
+enableXTSocketFallback: true
+encryption:
+  enabled: true
+  type: wireguard
+  nodeEncryption: true
+  wireguard:
+    persistentKeepalive: 1s
+externalIPs:
+  enabled: true
+hubble:
+  enabled: true
+  ui:
+    enabled: true
+    standalone:
+      enabled: false
+    service:
+      type: ClusterIP
+      nodePort: 31235
+    baseUrl: "/"
+    ingress:
+      enabled: true
+      annotations:
+        cert-manager.io/cluster-issuer: "letsencrypt-staging"
+      className: "nginx-internal"
+      hosts:
+        - internal.hubble.fr3d.dev
+      tls:
+        - secretName: cilium-tls
+          hosts:
+            - internal.hubble.fr3d.dev
+  export:
+    fileMaxSizeMb: 10
+    fileMaxBackups: 2
+  relay:
+    enabled: true
+    rollOutPods: false
+
+ipam:
+  mode: "cluster-pool"
+  # -- Maximum rate at which the CiliumNode custom resource is updated.
+  operator:
+    #clusterPoolIPv4PodCIDRList:
+    #- "10.42.0.0/16"
+    clusterPoolIPv4MaskSize: 24
+ipv4:
+  enabled: true
+ipv6:
+  enabled: false
+l2NeighDiscovery:
+  enabled: true
+  refreshPeriod: "30s"
+autoDirectNodeRoutes: false
+annotateK8sNode: true
+operator:
+  replicas: 1
+  enabled: true
+preflight:
+  # -- Enable Cilium pre-flight resources (required for upgrade)
+  enabled: false
+enableInternalTrafficPolicy: true
+# -- Enable LoadBalancer IP Address Management
+enableLBIPAM: true
+k8sClientRateLimit:
+  qps: 50
+  burst: 100

@@ -1,6 +1,7 @@
 ---
 persistentVolumeClaim:
   enabled: true
+  storageClass: "local-path"
   accessModes:
     - ReadWriteOnce
   size: "2048Mi"
@@ -15,12 +16,15 @@ ingress:
   tls:
     - secretName: pihole-tls
       hosts:
-       - pihole.fr3d.dev
+       - internal.pihole.fr3d.dev
 
 serviceDns:
   loadBalancerIP: 10.3.3.51
+  mixedService: true
   annotations:
-    metallb.universe.tf/allow-shared-ip: pihole-dns-tcp
+    io.cilium/lb-ipam-ips: 10.3.3.51
+    io.cilium/lb-ipam-sharing-key: pihole-dns-tcp
+
   type: LoadBalancer
 replicaCount: 1
 

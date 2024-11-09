@@ -13,6 +13,8 @@ apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
   name: letsencrypt-production
+  namespace: kube-system
+
 spec:
   acme:
     server: https://acme-v02.api.letsencrypt.org/directory
@@ -35,7 +37,7 @@ apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
   name: letsencrypt-staging
-  namespace: cert-manager
+  namespace: kube-system
 spec:
   acme:
     server: https://acme-staging-v02.api.letsencrypt.org/directory
@@ -72,22 +74,22 @@ spec:
             name: awssm-secret
             key: secret-access-key
             namespace: external-secrets
----
-apiVersion: metallb.io/v1beta1
-kind: IPAddressPool
-metadata:
-  name: pool
-  namespace: metallb-system
-spec:
-  addresses:
-    - 10.3.3.50-10.3.3.100
-
----
-apiVersion: metallb.io/v1beta1
-kind: L2Advertisement
-metadata:
-  name: home
-  namespace: metallb-system
-spec:
-  ipAddressPools:
-  - pool
+# ---
+# apiVersion: metallb.io/v1beta1
+# kind: IPAddressPool
+# metadata:
+#   name: pool
+#   namespace: metallb-system
+# spec:
+#   addresses:
+#     - 10.3.3.50-10.3.3.100
+#
+# ---
+# apiVersion: metallb.io/v1beta1
+# kind: L2Advertisement
+# metadata:
+#   name: home
+#   namespace: metallb-system
+# spec:
+#   ipAddressPools:
+#   - pool

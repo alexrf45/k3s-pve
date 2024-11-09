@@ -19,13 +19,13 @@ all:
         ansible_host: 10.3.3.41
         ansible_user: fr3d
         ansible_ssh_private_key_file: "~/.ssh/lab"
-  server-2:
-    hosts:
-      server-03:
-        ansible_host: 10.3.3.42
-        ansible_user: fr3d
-        ansible_ssh_private_key_file: "~/.ssh/lab"
-
+  # server-2:
+  #   hosts:
+  #     server-03:
+  #       ansible_host: 10.3.3.42
+  #       ansible_user: fr3d
+  #       ansible_ssh_private_key_file: "~/.ssh/lab"
+  #
   agent:
     hosts:
       node-01:
@@ -40,8 +40,8 @@ all:
         ansible_host: 10.3.3.45
         ansible_user: fr3d
         ansible_ssh_private_key_file: "~/.ssh/lab"
-      node-04:
-        ansible_host: 10.3.3.46
-        ansible_user: fr3d
-        ansible_ssh_private_key_file: "~/.ssh/lab"
+      # node-04:
+      #   ansible_host: 10.3.3.46
+      #   ansible_user: fr3d
+      #   ansible_ssh_private_key_file: "~/.ssh/lab"
 

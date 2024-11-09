@@ -1,4 +1,4 @@
-nameOverride: argocd
+nameOverride: argo-cd
 
 createClusterRoles: true
 crds:
@@ -281,7 +281,7 @@ server:
          pathType: Prefix
          backend:
            service:
-             name: argo-cd-argocd-argo-server
+             name: argo-cd-argo-server
              port:
                name: https
 

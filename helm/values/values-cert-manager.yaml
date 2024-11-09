@@ -4,7 +4,7 @@ global:
     aggregateClusterRoles: true
   logLevel: 3
   leaderElection:
-    namespace: "cert-manager"
+    namespace: "kube-system"
 crds:
   enabled: true
   keep: true

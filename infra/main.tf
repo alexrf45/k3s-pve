@@ -54,42 +54,29 @@ module "server" {
 
   vm_config = {
     v1 = {
-      node             = "thoth",
+      node             = "horus",
       template         = "k3s",
       tags             = "controlplane",
       description      = "server"
       vm_id            = "8001"
       memory           = "8092",
-      size             = "300",
+      size             = "80",
       vm_name          = "server-01",
       storage_location = "local-lvm",
       ip               = "10.3.3.40",
     },
     v2 = {
-      node             = "horus",
+      node             = "anubis",
       template         = "k3s",
       description      = "server",
-      tags             = "controlplane",
+      tags             = "controlplane2",
       vm_id            = "8002"
       memory           = "8092",
-      size             = "300",
+      size             = "80",
       vm_name          = "server-02",
       storage_location = "data",
       ip               = "10.3.3.41",
     },
-    v3 = {
-      node             = "anubis",
-      template         = "k3s",
-      description      = "server",
-      tags             = "controlplane",
-      vm_id            = "8003"
-      memory           = "8092",
-      size             = "300",
-      vm_name          = "server-03",
-      storage_location = "local-lvm",
-      ip               = "10.3.3.42",
-    },
-
   }
 
 }
@@ -115,49 +102,37 @@ module "node" {
       node             = "bastet",
       template         = "k3s",
       tags             = "node",
-      description      = "k3s node"
+      description      = "k3s node 1"
       vm_id            = "8004",
       memory           = "8092",
-      size             = "200",
+      size             = "100",
       vm_name          = "node-01",
       storage_location = "data",
       ip               = "10.3.3.43",
     },
     v2 = {
-      node             = "thoth",
+      node             = "bastet",
       template         = "k3s",
-      description      = "k3s node"
+      description      = "k3s node 2"
       tags             = "node"
       vm_id            = "8005"
       memory           = "8092",
-      size             = "300",
+      size             = "100",
       vm_name          = "node-02",
-      storage_location = "backup",
+      storage_location = "data",
       ip               = "10.3.3.44",
     },
     v3 = {
       node             = "anubis",
       template         = "k3s",
-      description      = "k3s node"
+      description      = "k3s node 3"
       tags             = "node"
       vm_id            = "8006"
       memory           = "8092",
-      size             = "300",
+      size             = "200",
       vm_name          = "node-03",
       storage_location = "local-lvm",
       ip               = "10.3.3.45",
-    },
-    v4 = {
-      node             = "osiris",
-      template         = "k3s",
-      description      = "k3s node"
-      tags             = "node"
-      vm_id            = "8007"
-      memory           = "8092",
-      size             = "300",
-      vm_name          = "node-04",
-      storage_location = "data",
-      ip               = "10.3.3.46",
     },
   }
 
