@@ -1,0 +1,37 @@
+global:
+  rbac:
+    create: true
+    aggregateClusterRoles: true
+  logLevel: 3
+  leaderElection:
+    namespace: "cert-manager"
+crds:
+  enabled: true
+  keep: true
+replicaCount: 3
+maxConcurrentChallenges: 60
+
+image:
+  repository: quay.io/jetstack/cert-manager-controller
+  pullPolicy: IfNotPresent
+enableCertificateOwnerRef: true
+dns01RecursiveNameservers: "1.1.1.1:53,9.9.9.9:53"
+dns01RecursiveNameserversOnly: true
+approveSignerNames:
+- issuers.cert-manager.io/*
+- clusterissuers.cert-manager.io/*
+podDnsPolicy: "None"
+podDnsConfig:
+   nameservers:
+     - "1.1.1.1"
+     - "10.3.3.1"
+
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 15
+  successThreshold: 1
+  failureThreshold: 8
+
+

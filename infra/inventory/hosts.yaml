@@ -1,0 +1,47 @@
+---
+all:
+ children:
+  db:
+    hosts:
+      etcd-db:
+        ansible_host: 10.3.3.20
+        ansible_user: fr3d
+        ansible_ssh_private_key_file: "~/.ssh/lab"
+  server:
+    hosts:
+      server-01:
+        ansible_host: 10.3.3.40
+        ansible_user: fr3d
+        ansible_ssh_private_key_file: "~/.ssh/lab"
+  server-1:
+    hosts:
+      server-02:
+        ansible_host: 10.3.3.41
+        ansible_user: fr3d
+        ansible_ssh_private_key_file: "~/.ssh/lab"
+  server-2:
+    hosts:
+      server-03:
+        ansible_host: 10.3.3.42
+        ansible_user: fr3d
+        ansible_ssh_private_key_file: "~/.ssh/lab"
+
+  agent:
+    hosts:
+      node-01:
+        ansible_host: 10.3.3.43
+        ansible_user: fr3d
+        ansible_ssh_private_key_file: "~/.ssh/lab"
+      node-02:
+        ansible_host: 10.3.3.44
+        ansible_user: fr3d
+        ansible_ssh_private_key_file: "~/.ssh/lab"
+      node-03:
+        ansible_host: 10.3.3.45
+        ansible_user: fr3d
+        ansible_ssh_private_key_file: "~/.ssh/lab"
+      node-04:
+        ansible_host: 10.3.3.46
+        ansible_user: fr3d
+        ansible_ssh_private_key_file: "~/.ssh/lab"
+

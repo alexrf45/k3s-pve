@@ -1,0 +1,364 @@
+nameOverride: argocd
+
+createClusterRoles: true
+crds:
+  install: true
+  keep: true
+global:
+  domain: internal.argo.fr3d.dev
+  logging:
+    # -- Set the global logging format. Either: `text` or `json`
+    format: json
+    # -- Set the global logging level. One of: `debug`, `info`, `warn` or `error`
+    level: error
+
+  affinity:
+    # -- Default pod anti-affinity rules. Either: `none`, `soft` or `hard`
+    podAntiAffinity: soft
+    # Node affinity rules
+    nodeAffinity:
+      # -- Default node affinity rules. Either: `none`, `soft` or `hard`
+      type: hard
+      # -- Default match expressions for node affinity
+      matchExpressions: []
+        # - key: topology.kubernetes.io/zone
+        #   operator: In
+        #   values:
+        #    - antarctica-east1
+        #    - antarctica-west1
+
+configs:
+  cm:
+    create: true
+    application.instanceLabelKey: argocd.argoproj.io/instance
+    admin.enabled: true
+    statusbadge.enabled: true
+    resource.exclusions: |
+        - apiGroups:
+          - snapshot.storage.k8s.io
+          kinds:
+          - VolumeSnapshot
+          - VolumeSnapshotContent
+          clusters:
+          - "*"
+  params:
+    create: true
+    controller.status.processors: 20
+    controller.operation.processors: 10
+    controller.self.heal.timeout.seconds: 5
+    controller.repo.server.timeout.seconds: 60
+    server.insecure: true
+
+    applicationsetcontroller.policy: sync
+    applicationsetcontroller.enable.progressive.syncs: true
+
+    # -- Enables [Applications in any namespace]
+    ## List of additional namespaces where applications may be created in and reconciled from.
+    application.namespaces: "dev-apps"
+
+  secret:
+    # -- Create the argocd-secret
+    createSecret: true
+      # -- Shared secret for authenticating GitHub webhook events
+    githubSecret: ""
+    # -- Shared secret for authenticating GitLab webhook events
+    gitlabSecret: ""
+    # -- Shared secret for authenticating BitbucketServer webhook events
+    azureDevops:
+      # -- Shared secret username for authenticating Azure DevOps webhook events
+      username: ""
+      # -- Shared secret password for authenticating Azure DevOps webhook events
+      password: ""
+
+    ## Argo expects the password in the secret to be bcrypt hashed. You can create this hash with
+    ## `htpasswd -nbBC 10 "" $ARGO_PWD | tr -d ':\n' | sed 's/$2y/$2a/'`
+    argocdServerAdminPassword: "$2a$10$CJwC2lJ/qEa1LDZ25DYI5.7TLO8Qmt3pl6DWfGrthPLH9WkTLgcSm"
+
+  # -- Define custom [CSS styles] for your argo instance.
+  # This setting will automatically mount the provided CSS and reference it in the argo configuration.
+  # @default -- `""` (See [values.yaml])
+  ## Ref: https://argo-cd.readthedocs.io/en/stable/operator-manual/custom-styles/
+  styles: |
+   .sidebar {
+     background: linear-gradient(to bottom, #999, #777, #333, #222, #111);
+   }
+   body{
+       background: #151515;
+   }
+   .filters-group__panel{
+        background-color: black;
+        color: white;
+   }
+   .filter{
+        background-color: #232222;
+        color: white;
+   }
+   .filter__item{
+        background-color: #232222;
+        color: white;
+   }
+
+## Application controller
+controller:
+  name: application-controller
+  replicas: 2
+  dynamicClusterDistribution: false
+  heartbeatTime: 10
+  revisionHistoryLimit: 5
+  image:
+    sizeLimit: "3Gi"
+    # sizeLimit: "1Gi"
+
+  resources:
+    limits:
+      cpu: 500m
+      memory: 750Mi
+    requests:
+      cpu: 500m
+      memory: 750Mi
+
+  containerPorts:
+    metrics: 8082
+
+
+  metrics:
+    # -- Deploy metrics service
+    enabled: true
+    # -- Prometheus ServiceMonitor scrapeTimeout. If empty, Prometheus uses the global scrape timeout unless it is less than the target's scrape interval value in which the latter is used.
+    scrapeTimeout: "60s"
+    service:
+      # -- Metrics service type
+      type: ClusterIP
+      # -- Metrics service clusterIP. `None` makes a "headless service" (no virtual IP)
+      clusterIP: ""
+      # -- Metrics service annotations
+      servicePort: 8082
+      portName: argo-http-metrics
+    serviceMonitor:
+      # -- Enable a prometheus ServiceMonitor
+      enabled: true
+      interval: 30s
+      namespace: "" # "monitoring"
+    rules:
+      # -- Deploy a PrometheusRule for the application controller
+      enabled: true
+      namespace: "" # "monitoring"
+## Dex
+dex:
+  # -- Enable dex
+  enabled: true
+  # -- Dex name
+  name: dex-server
+
+  emptyDir:
+    # -- EmptyDir size limit for Dex server
+    # @default -- `""` (defaults not set if not specified i.e. no size limit)
+    sizeLimit: "3Gi"
+    # sizeLimit: "1Gi"
+
+  logFormat: ""
+  logLevel: "error"
+
+## Redis
+redis:
+  # -- Enable redis
+  enabled: true
+  # -- Redis name
+  name: redis
+
+  ## Redis image
+  image:
+    repository: public.ecr.aws/docker/library/redis
+    tag: 7.2.4-alpine
+    imagePullPolicy: ""
+
+  serviceAccount:
+    # -- Create a service account for the redis pod
+    create: true
+    # -- Service account name for redis pod
+    name: "redis-dev-sa"
+    automountServiceAccountToken: true
+
+## Redis-HA subchart replaces custom redis deployment when `redis-ha.enabled=true`
+# Ref: https://github.com/DandyDeveloper/charts/blob/master/charts/redis-ha/values.yaml
+redis-ha:
+  # -- Enables the Redis HA subchart and disables the custom Redis single node deployment
+  enabled: false
+  ## Redis image
+  image:
+    # -- Redis repository
+    repository: public.ecr.aws/docker/library/redis
+    # -- Redis tag
+    tag: 7.2.4-alpine
+  ## Prometheus redis-exporter sidecar
+  exporter:
+    # -- Enable Prometheus redis-exporter sidecar
+    enabled: false
+    # -- Repository to use for the redis-exporter
+    image: public.ecr.aws/bitnami/redis-exporter
+    # -- Tag to use for the redis-exporter
+    tag: 1.58.0
+  persistentVolume:
+    # -- Configures persistence on Redis nodes
+    enabled: true
+  ## Redis specific configuration options
+  redis:
+    # -- Redis convention for naming the cluster group: must match `^[\\w-\\.]+$` and can be templated
+    masterGroupName: argocd
+    # -- Any valid redis config options in this section will be applied to each server (see `redis-ha` chart)
+    # @default -- See [values.yaml]
+    config:
+      # -- Will save the DB if both the given number of seconds and the given number of write operations against the DB occurred. `""`  is disabled
+      # @default -- `'""'`
+      save: '""'
+  ## Enables a HA Proxy for better LoadBalancing / Sentinel Master support. Automatically proxies to Redis master.
+  haproxy:
+    enabled: true
+    labels:
+      app.kubernetes.io/name: argocd-redis-ha-haproxy
+
+# Server
+server:
+  # -- Argo CD server name
+  name: argo-server
+
+  # -- The number of server pods to run
+  replicas: 2
+  ## Argo CD server Horizontal Pod Autoscaler
+  autoscaling:
+    # -- Enable Horizontal Pod Autoscaler ([HPA]) for the Argo CD server
+    enabled: true
+    # -- Minimum number of replicas for the Argo CD server [HPA]
+    minReplicas: 1
+    # -- Maximum number of replicas for the Argo CD server [HPA]
+    maxReplicas: 3
+    # -- Average CPU utilization percentage for the Argo CD server [HPA]
+    targetCPUUtilizationPercentage: 40
+    # -- Average memory utilization percentage for the Argo CD server [HPA]
+    targetMemoryUtilizationPercentage: 15
+  image:
+    repository: "" # defaults to global.image.repository
+    tag: "" # defaults to global.image.tag
+
+  extensions:
+    # -- Enable support for Argo CD extensions
+    enabled: true
+    image:
+      # -- Repository to use for extension installer image
+      repository: "quay.io/argoprojlabs/argocd-extension-installer"
+      tag: "v0.0.5"
+      imagePullPolicy: ""
+
+  service:
+    type: ClusterIP
+   # -- Server service http port
+    servicePortHttp: 80
+    # -- Server service https port
+    servicePortHttps: 443
+    # -- The class of the load balancer implementation
+    loadBalancerClass: ""
+    # -- LoadBalancer will get created with the IP specified in this field
+    loadBalancerIP: ""
+  # Argo CD server ingress configuration
+  ingress:
+    # -- Enable an ingress resource for the Argo CD server
+    enabled: true
+    # -- Specific implementation for ingress controller. One of `generic`, `aws` or `gke`
+    ## Additional configuration might be required in related configuration sections
+    controller: generic
+    annotations:
+      cert-manager.io/cluster-issuer: "letsencrypt-production"
+
+    ingressClassName: "nginx-internal"
+
+    hostname: "internal.argo.fr3d.dev"
+    path: /
+    pathType: Prefix
+    tls: true
+
+    extraPaths:
+       - path: /
+         pathType: Prefix
+         backend:
+           service:
+             name: argo-cd-argocd-argo-server
+             port:
+               name: https
+
+repoServer:
+  name: repo-server
+  replicas: 2
+applicationSet:
+  name: applicationset-controller
+  replicas: 2
+  ## Applica  ## Ingress for the Git Generator webhook
+  ## Ref: https://argocd-applicationset.readthedocs.io/en/master/Generators-Git/#webhook-configuration)
+  ingress:
+    # -- Enable an ingress resource for ApplicationSet webhook
+    enabled: false
+    # -- Additional ingress labels
+    labels: {}
+    # -- Additional ingress annotations
+    annotations: {}
+
+    # -- Defines which ingress ApplicationSet controller will implement the resource
+    ingressClassName: ""
+
+    # -- Argo CD ApplicationSet hostname
+    # @default -- `""` (defaults to global.domain)
+    hostname: ""
+
+    # -- List of ingress paths
+    path: /api/webhook
+
+    # -- Ingress path type. One of `Exact`, `Prefix` or `ImplementationSpecific`
+    pathType: Prefix
+
+    # -- Enable TLS configuration for the hostname defined at `applicationSet.webhook.ingress.hostname`
+    ## TLS certificate will be retrieved from a TLS secret with name:`argocd-applicationset-controller-tls`
+    tls: false
+
+    # -- The list of additional hostnames to be covered by ingress record
+    # @default -- `[]` (See [values.yaml])
+    extraHosts: []
+      # - name: argocd.example.com
+      #   path: /
+
+    # -- Additional ingress paths
+    # @default -- `[]` (See [values.yaml])
+    extraPaths: []
+      # - path: /*
+      #   pathType: Prefix
+      #   backend:
+      #     service:
+      #       name: ssl-redirect
+      #       port:
+      #         name: use-annotation
+
+    # -- Additional ingress rules
+    # @default -- `[]` (See [values.yaml])
+    ## Note: Supports use of custom Helm templates
+    extraRules: []
+      # - http:
+      #    paths:
+      #    - path: /api/webhook
+      #      pathType: Prefix
+      #      backend:
+      #        service:
+      #          name: '{{ include "argo-cd.applicationSet.fullname" . }}'
+      #          port:
+      #            name: '{{ .Values.applicationSet.service.portName }}'
+
+    # -- Additional ingress TLS configuration
+    # @default -- `[]` (See [values.yaml])
+    extraTls: []
+      # - secretName: argocd-applicationset-tls
+      #   hosts:
+      #     - argocd-applicationset.example.com
+  # -- Enable ApplicationSet in any namespace feature
+  allowAnyNamespace: false
+## Notifications controller
+notifications:
+  enabled: true
+  name: notifications-controller
+

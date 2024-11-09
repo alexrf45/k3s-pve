@@ -1,0 +1,48 @@
+- name: Install k3s on primary control plane
+  become: true
+  gather_facts: true
+  hosts: server
+  tasks:
+    - name: k3s server
+      shell: |
+        curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="v1.30.4+k3s1" INSTALL_K3S_EXEC="server" sh -s - \
+        --datastore-endpoint="mysql://deploy:{{ mysql_password }}@tcp(10.3.3.20:3306)/k3s_data" \
+        --cluster-init \
+        --disable=traefik,servicelb \
+        --flannel-backend=wireguard-native \
+        --disable-network-policy \
+        --secrets-encryption \
+        --token {{ token }} \
+        --write-kubeconfig-mode=644
+
+- name: Install k3s on secondary control plane
+  become: true
+  gather_facts: true
+  hosts: server-1
+  tasks:
+     - name: k3s server
+       shell: |
+         curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="v1.30.4+k3s1" INSTALL_K3S_EXEC="server" sh -s - \
+         --datastore-endpoint="mysql://deploy:{{ mysql_password }}@tcp(10.3.3.20:3306)/k3s_data" \
+         --server https://10.3.3.100:6443 \
+         --disable=traefik,servicelb \
+         --secrets-encryption \
+         --flannel-backend=wireguard-native \
+         --disable-network-policy \
+         --token '{{ token }}' \
+         --write-kubeconfig-mode=644
+
+
+- name: Install k3s on nodes
+  become: true
+  gather_facts: true
+  hosts: agent
+  tasks:
+    - name: k3 agents
+      shell: |
+        curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="v1.30.4+k3s1" \
+        K3S_URL=https://10.3.3.100:6443 \
+        K3S_TOKEN='{{ token }}' sh -s - \
+        --node-label='worker=node'
+
+
